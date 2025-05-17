@@ -122,5 +122,5 @@ shutdownListeners :: TVar World -> STM (IO ())
 shutdownListeners world' = do
   world <- readTVar world'
   writeTVar world' world { listeners = M.empty }
-  return $ M.fold (\listener io -> listenerCancel listener >> io) (return ()) $
+  return $ M.foldr (\listener io -> listenerCancel listener >> io) (return ()) $
     listeners world
