@@ -920,18 +920,21 @@ tellProperties objects obj (Just oid) = do
   let Just definer = objects ! oid
   properties <- liftVTx $ definedProperties definer
   forM_ properties $ \propertyName -> do
-    Just property <- liftVTx $ lookupProperty obj propertyName
-    case propertyValue property of
-      Nothing    -> tellLn (decimal type_clear)
-      Just value -> tellValue (deref value)
+    maybeProperty <- liftVTx $ lookupProperty obj propertyName
+    case maybeProperty of
+      Just property -> do
+        case propertyValue property of
+          Nothing    -> tellLn (decimal type_clear)
+          Just value -> tellValue (deref value)
 
-    tellLn (decimal $ propertyOwner property)
+        tellLn (decimal $ propertyOwner property)
 
-    let flags = flag propertyPermR pf_read  .|.
-                flag propertyPermW pf_write .|.
-                flag propertyPermC pf_chown
-        flag test fl = if test property then fl else 0
-    tellLn (decimal flags)
+        let flags = flag propertyPermR pf_read  .|.
+                    flag propertyPermW pf_write .|.
+                    flag propertyPermC pf_chown
+            flag test fl = if test property then fl else 0
+        tellLn (decimal flags)
+      Nothing -> error $ "tellProperties: " ++ show propertyName
 
   tellProperties objects obj (objectParent definer)
 

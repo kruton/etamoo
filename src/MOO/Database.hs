@@ -112,29 +112,32 @@ renumber old db = do
       -- renumber database slot references
       let Just oldRef = dbObjectRef old db
           Just newRef = dbObjectRef new db
-      Just obj <- fmap deref <$> readPVar oldRef
-      writePVar oldRef Nothing
-      writePVar newRef (Just $ vref' (pvar_space newRef) obj)
+      maybeObj <- fmap deref <$> readPVar oldRef
+      case maybeObj of
+        Just obj -> do
+          writePVar oldRef Nothing
+          writePVar newRef (Just $ vref' (pvar_space newRef) obj)
 
-      -- ask the object to fix up parent/children and location/contents
-      renumberObject obj old new db
+          -- ask the object to fix up parent/children and location/contents
+          renumberObject obj old new db
 
-      -- fix up ownerships throughout entire database
-      forM_ [0..maxObject db] $ \oid -> case dbObjectRef oid db of
-        Just ref -> do
-          maybeObj <- fmap deref <$> readPVar ref
-          case maybeObj of
-            Just obj -> do
-              maybeNew <- renumberOwnership old new obj
-              when (isJust maybeNew) $
-                writePVar ref $ vref' (pvar_space ref) <$> maybeNew
+          -- fix up ownerships throughout entire database
+          forM_ [0..maxObject db] $ \oid -> case dbObjectRef oid db of
+            Just ref -> do
+              maybeObj <- fmap deref <$> readPVar ref
+              case maybeObj of
+                Just obj -> do
+                  maybeNew <- renumberOwnership old new obj
+                  when (isJust maybeNew) $
+                    writePVar ref $ vref' (pvar_space ref) <$> maybeNew
+                Nothing  -> return ()
             Nothing  -> return ()
-        Nothing  -> return ()
 
-      -- renumber player references (if any)
-      let db' = setPlayer (objectIsPlayer obj) new $ setPlayer False old db
+          -- renumber player references (if any)
+          let db' = setPlayer (objectIsPlayer obj) new $ setPlayer False old db
 
-      return (new, db')
+          return (new, db')
+        Nothing -> error $ "renumber: " ++ show old
 
   where findLeastUnused :: ObjId -> VTx (Maybe ObjId)
         findLeastUnused new
