@@ -21,7 +21,7 @@ import Data.Time (getCurrentTime, utcToLocalZonedTime, formatTime,
                   defaultTimeLocale)
 import Database.VCache (openVCache, vcache_space, readPVarIO, vcacheSync)
 import Database.VCache.Cache (setVRefsCacheLimit)
-import Network (withSocketsDo)
+import Network.Socket (withSocketsDo)
 import Pipes (Pipe, runEffect, (>->), for, cat, lift, yield)
 import Pipes.Concurrent (spawn', unbounded, send, fromInput)
 import System.IO (IOMode(ReadMode, AppendMode), BufferMode(LineBuffering),

@@ -150,7 +150,7 @@ executable etamoo
                      , haskeline
                      , memory
                      , mtl
-                     , network < 2.9
+                     , network
                      , parsec
                      , pipes
                      , pipes-bytestring
