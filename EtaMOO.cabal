@@ -150,14 +150,14 @@ executable etamoo
                      , haskeline
                      , memory
                      , mtl
-                     , network
+                     , network < 2.9
                      , parsec
                      , pipes
                      , pipes-bytestring
                      , pipes-concurrency >= 2.0.3
                      , pipes-network
                      , random
-                     , stm
+                     , stm < 2.5
                      , stm-chans
                      , text >= 1.2.1.2
                      , time >= 1.5
