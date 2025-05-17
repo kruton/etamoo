@@ -88,9 +88,11 @@ data MOOList = MOOList {
 instance Eq MOOList where
   (==) = (==) `on` toVector
 
+instance Semigroup MOOList where
+  (<>) = (++)
+
 instance Monoid MOOList where
   mempty  = empty
-  mappend = (++)
   mconcat = concat
 
 instance Show MOOList where

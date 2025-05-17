@@ -125,7 +125,7 @@ type LineNo = Int         -- ^ MOO code line number
 
 -- | MOO identifier (string lite)
 newtype Id = Id { unId :: CI Text }
-           deriving (Eq, Ord, Monoid, IsString, Hashable, Typeable)
+           deriving (Eq, Ord, Semigroup, Monoid, IsString, Hashable, Typeable)
 
 instance Show Id where
   show = show . unId

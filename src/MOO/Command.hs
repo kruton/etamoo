@@ -19,7 +19,7 @@ module MOO.Command (
 import Control.Applicative ((<$>))
 import Control.Monad (void, foldM)
 import Data.Char (isSpace, isDigit)
-import Data.Monoid (Monoid(mempty, mappend, mconcat), First(First, getFirst))
+import Data.Monoid (Monoid(mempty, mconcat), First(First, getFirst))
 import Data.Text (Text)
 import Text.Parsec (parse, try, many, many1, char, anyChar, noneOf, spaces,
                     satisfy, between, eof, (<|>))
@@ -187,12 +187,13 @@ matchObject player str
 
 data Match = NoMatch | PrefixMatch | ExactMatch
 
+instance Semigroup Match where
+  NoMatch <> match      = match
+  _       <> ExactMatch = ExactMatch
+  match   <> _          = match
+
 instance Monoid Match where
   mempty = NoMatch
-
-  NoMatch `mappend` match      = match
-  _       `mappend` ExactMatch = ExactMatch
-  match   `mappend` _          = match
 
 -- | Execute a typed command by locating and calling an appropriate MOO verb
 -- for the current player, matching @dobj@ and @iobj@ objects against the

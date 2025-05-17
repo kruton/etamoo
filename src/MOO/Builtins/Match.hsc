@@ -27,7 +27,7 @@ import Data.Bits (Bits(zeroBits, (.|.), (.&.), complement))
 import Data.ByteString (ByteString, useAsCString, useAsCStringLen)
 import Data.Function (on)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Monoid(mempty, mappend), (<>))
+import Data.Monoid (Monoid(mempty), (<>))
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8, decodeUtf8)
 import Foreign (Ptr, FunPtr, ForeignPtr, toBool,
@@ -39,6 +39,12 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Data.ByteString as BS
 import qualified Data.Text as T
+
+instance Semigroup CInt where
+    (<>) = (.|.)
+
+instance Semigroup CULong where
+    (<>) = (.|.)
 
 {-# ANN module ("HLint: ignore Avoid lambda" :: String) #-}
 {-# ANN module ("HLint: ignore Redundant lambda" :: String) #-}
@@ -76,16 +82,15 @@ data PCRE
 data PCREExtra
 data CharacterTables
 
-newtype BitFlags a = Flags a deriving (Eq, Bits, Storable)
+newtype BitFlags a = Flags a deriving (Eq, Bits, Storable, Semigroup)
 
-instance Bits a => Monoid (BitFlags a) where
+instance (Bits a, Semigroup a) => Monoid (BitFlags a) where
   mempty  = zeroBits
-  mappend = (.|.)
 
 andNot :: Bits a => a -> a -> a
 x `andNot` y = x .&. complement y
 
-newtype PCREOptions = Options (BitFlags CInt) deriving Monoid
+newtype PCREOptions = Options (BitFlags CInt) deriving (Semigroup, Monoid)
 
 # enum PCREOptions, (Options . Flags)  \
   , PCRE_UTF8                          \
@@ -93,13 +98,13 @@ newtype PCREOptions = Options (BitFlags CInt) deriving Monoid
   , PCRE_DOLLAR_ENDONLY                \
   , PCRE_CASELESS
 
-newtype PCREStudyOptions = StudyOptions (BitFlags CInt) deriving Monoid
+newtype PCREStudyOptions = StudyOptions (BitFlags CInt) deriving (Semigroup, Monoid)
 
 # enum PCREStudyOptions, (StudyOptions . Flags)  \
   , PCRE_STUDY_JIT_COMPILE
 
 newtype PCREExtraFlags = ExtraFlags (BitFlags CULong)
-                       deriving (Monoid, Eq, Bits, Storable)
+                       deriving (Semigroup, Monoid, Eq, Bits, Storable)
 
 # enum PCREExtraFlags, (ExtraFlags . Flags)  \
   , PCRE_EXTRA_MATCH_LIMIT                   \

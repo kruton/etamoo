@@ -158,7 +158,7 @@ import Data.Int (Int32)
 import Data.List (find)
 import Data.Map (Map)
 import Data.Maybe (isNothing, fromMaybe, fromJust)
-import Data.Monoid (Monoid(mempty, mappend), (<>))
+import Data.Monoid (Monoid(mempty), (<>))
 import Data.Text (Text)
 import Data.Text.Lazy.Builder (Builder)
 import Data.Time (UTCTime, getCurrentTime, addUTCTime)
@@ -650,9 +650,11 @@ interrupt disp = do
 -- 'STM' transaction
 newtype DelayedIO = DelayedIO { runDelayed :: IO () }
 
+instance Semigroup DelayedIO where
+  DelayedIO a <> DelayedIO b = DelayedIO (a >> b)
+
 instance Monoid DelayedIO where
   mempty = DelayedIO $ return ()
-  DelayedIO a `mappend` DelayedIO b = DelayedIO (a >> b)
 
 -- | Interrupt the current task to perform the given IO computation, and
 -- return the result. Note this implies a commit of the task's 'STM'

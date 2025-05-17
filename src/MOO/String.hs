@@ -62,7 +62,7 @@ import Data.ByteString (ByteString)
 import Data.Char (isAscii, isPrint, isHexDigit, digitToInt, intToDigit)
 import Data.Function (on)
 import Data.Hashable (Hashable(hashWithSalt))
-import Data.Monoid (Monoid(mempty, mappend, mconcat))
+import Data.Monoid (Monoid(mempty, mconcat))
 import Data.String (IsString(fromString))
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8, decodeUtf8)
@@ -113,9 +113,11 @@ instance Ord MOOString where
 instance Hashable MOOString where
   hashWithSalt salt = hashWithSalt salt . toCaseFold
 
+instance Semigroup MOOString where
+  (<>) = append
+
 instance Monoid MOOString where
   mempty  = empty
-  mappend = append
   mconcat = concat
 
 instance Show MOOString where
