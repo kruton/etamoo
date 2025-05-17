@@ -1231,8 +1231,10 @@ unwindContexts p = do
 
 unwindLoopContext :: Maybe Id -> MOO Context
 unwindLoopContext maybeName = do
-  loop:_ <- unwindContexts testContext
-  return loop
+  contexts <- unwindContexts testContext
+  case contexts of
+    (loop:_) -> return loop
+    [] -> error "unwindLoopContext: No matching loop context found"
 
   where testContext :: Context -> Bool
         testContext Loop { loopName = name } =
@@ -1241,13 +1243,17 @@ unwindLoopContext maybeName = do
 
 breakLoop :: Maybe Id -> MOO Value
 breakLoop maybeName = do
-  Loop { loopBreak = Continuation break } <- unwindLoopContext maybeName
-  break ()
+  loop <- unwindLoopContext maybeName
+  case loop of
+    Loop { loopBreak = Continuation break } -> break ()
+    _ -> error "breakLoop: No matching loop context found"
 
 continueLoop :: Maybe Id -> MOO Value
 continueLoop maybeName = do
-  Loop { loopContinue = Continuation continue } <- unwindLoopContext maybeName
-  continue ()
+  loop <- unwindLoopContext maybeName
+  case loop of
+    Loop { loopContinue = Continuation continue } -> continue ()
+    _ -> error "continueLoop: No matching loop context found"
 
 -- | The default collection of verb variables
 initVariables :: HashMap Id Value
