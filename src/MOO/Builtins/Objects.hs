@@ -118,21 +118,24 @@ bf_create = Builtin "create" 1 (Just 2)
       liftVTx $ modifyObject oid db $ addChild newOid
 
       -- properties inherited from parent
-      Just parent <- getObject oid
-      HM.fromList <$> mapM mkProperty (HM.toList $ objectProperties parent)
+      maybeParent <- getObject oid
+      case maybeParent of
+        Just parent -> do
+          HM.fromList <$> mapM mkProperty (HM.toList $ objectProperties parent)
 
-        where mkProperty :: (StrT, PVar (VRef Property)) ->
-                            MOO (StrT, PVar (VRef Property))
-              mkProperty (name, propPVar) = liftVTx $ do
-                prop <- deref' <$> readPVar propPVar
-                let prop' = prop {
-                        propertyValue     = Nothing
-                      , propertyInherited = True
-                      , propertyOwner     = if propertyPermC prop then ownerOid
-                                            else propertyOwner prop
-                      }
-                propPVar' <- newPVar $ vref' (pvar_space propPVar) prop'
-                return (name, propPVar')
+            where mkProperty :: (StrT, PVar (VRef Property)) ->
+                                MOO (StrT, PVar (VRef Property))
+                  mkProperty (name, propPVar) = liftVTx $ do
+                    prop <- deref' <$> readPVar propPVar
+                    let prop' = prop {
+                            propertyValue     = Nothing
+                          , propertyInherited = True
+                          , propertyOwner     = if propertyPermC prop then ownerOid
+                                                else propertyOwner prop
+                          }
+                    propPVar' <- newPVar $ vref' (pvar_space propPVar) prop'
+                    return (name, propPVar')
+        Nothing -> error $ "bf_create: parent " ++ show oid ++ " not found"
 
   let newObj = initObject {
           objectParent     = maybeParent
@@ -209,9 +212,12 @@ reparentObject (object, obj) (new_parent, maybeNewParent) = do
         allDefinedProperties :: [ObjId] -> MOO [StrT]
         allDefinedProperties = fmap ($ []) . foldM concatProps id
           where concatProps acc oid = do
-                  Just obj <- getObject oid
-                  props <- liftVTx $ definedProperties obj
-                  return (acc props ++)
+                  maybeObj <- getObject oid
+                  case maybeObj of
+                    Just obj -> do
+                      props <- liftVTx $ definedProperties obj
+                      return (acc props ++)
+                    Nothing -> error $ "allDefinedProperties: " ++ show oid ++ " not found"
 
 bf_chparent = Builtin "chparent" 2 (Just 2)
               [TObj, TObj] TAny $ \[Obj object, Obj new_parent] -> do
@@ -404,15 +410,20 @@ bf_property_info = Builtin "property_info" 2 (Just 2)
 
 traverseDescendants :: (Object -> MOO a) -> ObjId -> MOO ()
 traverseDescendants f oid = do
-  Just obj <- getObject oid
-  f obj
-  mapM_ (traverseDescendants f) $ getChildren obj
+  maybeObj <- getObject oid
+  case maybeObj of
+    Just obj -> do
+      f obj
+      mapM_ (traverseDescendants f) $ getChildren obj
+    Nothing -> error $ "traverseDescendants: " ++ show oid ++ " not found"
 
 modifyDescendants :: Database -> (Object -> VTx Object) -> ObjId -> MOO ()
 modifyDescendants db f oid = do
   liftVTx $ modifyObject oid db f
-  Just obj <- getObject oid
-  mapM_ (modifyDescendants db f) $ getChildren obj
+  maybeObj <- getObject oid
+  case maybeObj of
+    Just obj -> mapM_ (modifyDescendants db f) $ getChildren obj
+    Nothing -> error $ "modifyDescendants: " ++ show oid ++ " not found"
 
 {-# ANN module ("HLint: ignore Use String" :: String) #-}
 

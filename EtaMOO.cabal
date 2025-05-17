@@ -157,7 +157,7 @@ executable etamoo
                      , pipes-concurrency >= 2.0.3
                      , pipes-network
                      , random
-                     , stm < 2.5
+                     , stm
                      , stm-chans
                      , text >= 1.2.1.2
                      , time >= 1.5
