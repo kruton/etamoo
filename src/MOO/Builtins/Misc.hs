@@ -10,8 +10,8 @@ import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds, posixSecondsToUTCTime)
 import Database.VCache (VCacheStats(..), vcacheStats)
 
 # ifdef __GLASGOW_HASKELL__
-import GHC.Stats (GCStats(currentBytesUsed, maxBytesUsed),
-                  getGCStats, getGCStatsEnabled)
+import GHC.Stats (RTSStats(allocated_bytes, max_mem_in_use_bytes),
+                  getRTSStats, getRTSStatsEnabled)
 # endif
 
 import MOO.Builtins.Common
@@ -135,13 +135,13 @@ bf_memory_usage = Builtin "memory_usage" 0 (Just 0) [] TLst $ \[] ->
 # ifdef __GLASGOW_HASKELL__
   -- Server must be run with +RTS -T to enable statistics
   do maybeStats <- requestIO $ do
-       enabled <- getGCStatsEnabled
-       if enabled then Just <$> getGCStats else return Nothing
+       enabled <- getRTSStatsEnabled
+       if enabled then Just <$> getRTSStats else return Nothing
 
      return $ case maybeStats of
        Just stats ->
-         let nused = currentBytesUsed stats
-             nfree = maxBytesUsed stats - nused
+         let nused = allocated_bytes stats
+             nfree = max_mem_in_use_bytes stats - nused
              maxBlockSize = 2 ^ (floor $ logBase (2 :: Double) $
                                  fromIntegral $ max nused nfree :: Int)
          in fromListBy (fromListBy $ Int . fromIntegral) $
