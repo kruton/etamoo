@@ -168,7 +168,7 @@ import Database.VCache (VSpace, VTx, runVTx, getVTxSpace, deref, vref,
                         pvar_space, VRef)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Posix (nanosleep)
-import System.Random (Random, StdGen, newStdGen, mkStdGen, split,
+import System.Random (Random, StdGen, newStdGen, mkStdGen, splitGen,
                       randomR, randomRs)
 
 import qualified Data.HashMap.Lazy as HM
@@ -1476,7 +1476,7 @@ random = getRandom . randomR
 -- | Split the local random number generator state in two, updating the local
 -- state with one of them and returning the other.
 newRandomGen :: MOO StdGen
-newRandomGen = getRandom split
+newRandomGen = getRandom splitGen
 
 getRandom :: (StdGen -> (a, StdGen)) -> MOO a
 getRandom f = do
