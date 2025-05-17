@@ -278,7 +278,7 @@ paren expr = do
 mightParen :: (Int -> Int -> Bool) -> Expr -> Expr -> Unparser Builder
 mightParen cmp parent child = do
   fullyParenthesizing <- asks fullyParenthesizing
-  if (fullyParenthesizing && precedence child < precedence PropertyRef{}) ||
+  if (fullyParenthesizing && precedence child < precedence (PropertyRef (Literal (Int 0)) (Literal (Str "")))) ||
      (precedence parent `cmp` precedence child)
     then paren child
     else unparseExpr child
